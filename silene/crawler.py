@@ -64,11 +64,14 @@ class Crawler(ABC):
         self._page_index = 0
         self._add_page_listeners(self._page)
 
+        self.on_start()
         self._run()
+        self.on_stop()
 
         syncer.sync(self._page.close())
         syncer.sync(self._browser.close())
         self._running = False
+        self._stop_initiated = False
 
     def crawl(self, request: CrawlRequest) -> bool:
         return self._crawl_frontier.add_request(request)
@@ -188,6 +191,9 @@ class Crawler(ABC):
     def stop(self) -> None:
         self._stop_initiated = True
 
+    def on_start(self) -> None:
+        logger.info('Crawler is starting')
+
     def on_request_redirect(self, response: CrawlResponse, redirected_request: CrawlRequest) -> None:
         logger.info('Request redirect: %s -> %s', response.request, redirected_request)
 
@@ -196,6 +202,9 @@ class Crawler(ABC):
 
     def on_response_error(self, response: CrawlResponse) -> None:
         logger.info('Response error: %s', response)
+
+    def on_stop(self) -> None:
+        logger.info('Crawler is stopping')
 
     def _check_if_crawler_running(self) -> None:
         if not self._running:

@@ -106,6 +106,38 @@ def test_request_error_handling(httpserver: HTTPServer) -> None:
     httpserver.check_assertions()
 
 
+def test_on_start_should_be_called_when_crawler_starts():
+    called = False
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([])
+
+        def on_start(self) -> None:
+            nonlocal called
+            called = True
+
+    TestCrawler().start()
+
+    assert called is True
+
+
+def test_on_stop_should_be_called_when_crawler_stops():
+    called = False
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([])
+
+        def on_stop(self) -> None:
+            nonlocal called
+            called = True
+
+    TestCrawler().start()
+
+    assert called is True
+
+
 def test_crawl(httpserver: HTTPServer) -> None:
     first_page_path = '/first-page'
     second_page_path = '/second-page'
