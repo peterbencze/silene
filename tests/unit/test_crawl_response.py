@@ -38,3 +38,7 @@ def test_text_should_return_text_content_when_text_content_is_set() -> None:
     text_content = 'Test'
 
     assert CrawlResponse(request, 200, {}, text=text_content).text == text_content
+
+
+def test_str_should_return_string_representation() -> None:
+    assert str(CrawlResponse(request, 200, {})) == 'CrawlResponse(url=https://example.com, status=200)'

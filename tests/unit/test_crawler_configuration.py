@@ -64,3 +64,14 @@ def test_allowed_domains_should_return_domains_only() -> None:
     crawler_configuration = CrawlerConfiguration([], allowed_domains=['https://www.example.com:80/'])
 
     assert crawler_configuration.allowed_domains == ['www.example.com']
+
+
+def test_str_should_return_string_representation() -> None:
+    crawler_configuration = CrawlerConfiguration([CrawlRequest('https://example.com')],
+                                                 filter_offsite_requests=True,
+                                                 allowed_domains=['example.com'])
+
+    assert str(crawler_configuration) == 'CrawlerConfiguration(seed_requests=1 requests, ' \
+                                         'filter_duplicate_requests=True, ' \
+                                         'filter_offsite_requests=True, ' \
+                                         'allowed_domains=1 domains)'

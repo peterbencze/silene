@@ -18,13 +18,17 @@ title = 'Example'
 page = BrowserPage(0, url, title)
 
 
-def test_index_should_return_page_index():
+def test_index_should_return_page_index() -> None:
     assert page.index == index
 
 
-def test_url_should_return_page_url():
+def test_url_should_return_page_url() -> None:
     assert page.url == url
 
 
-def test_title_should_return_page_title():
+def test_title_should_return_page_title() -> None:
     assert page.title == title
+
+
+def test_str_should_return_string_representation() -> None:
+    assert str(page) == 'BrowserPage(index=0, url=https://example.com, title=Example)'

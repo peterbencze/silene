@@ -69,3 +69,8 @@ def test_success_func_should_return_alternative_success_function() -> None:
 
 def test_error_func_should_return_alternative_error_function() -> None:
     assert CrawlRequest('https://example.com', error_func=error_func).error_func == error_func
+
+
+def test_str_should_return_string_representation() -> None:
+    assert str(CrawlRequest('https://example.com', priority=1)) == \
+           'CrawlRequest(url=https://example.com, domain=example.com, priority=1)'

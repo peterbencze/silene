@@ -55,3 +55,9 @@ class CrawlerConfiguration:
     @property
     def allowed_domains(self) -> List[str]:
         return self._allowed_domains
+
+    def __str__(self):
+        return f'CrawlerConfiguration(seed_requests={len(self._seed_requests)} requests, ' \
+               f'filter_duplicate_requests={self._filter_duplicate_requests}, ' \
+               f'filter_offsite_requests={self._filter_offsite_requests}, ' \
+               f'allowed_domains={len(self._allowed_domains)} domains)'
