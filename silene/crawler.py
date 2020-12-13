@@ -48,6 +48,7 @@ class Crawler(ABC):
         self._browser: Optional[Browser] = None
         self._page: Optional[Page] = None
         self._page_index: Optional[int] = None
+        self._next_request: Optional[CrawlRequest] = None
         self._send_head_request: bool = False
         self._aborted_request: bool = False
         self._last_request: Optional[Request] = None
@@ -213,24 +214,24 @@ class Crawler(ABC):
     def _run(self) -> None:
         while not self._stop_initiated and self._crawl_frontier.has_next_request():
             self._aborted_request = False
-            next_request = self._crawl_frontier.get_next_request()
+            self._next_request = self._crawl_frontier.get_next_request()
 
             # Send a HEAD request first
             self._send_head_request = True
             try:
-                syncer.sync(self._page.goto(next_request.url))
+                syncer.sync(self._page.goto(self._next_request.url))
             except PageError as error:
                 # Ignore exceptions that are caused by aborted requests
                 if self._aborted_request:
                     # Request was redirected, create a new crawl request for it
-                    self._handle_redirect(next_request, self._last_request, self._last_response)
+                    self._handle_redirect(self._next_request, self._last_request, self._last_response)
                     continue
                 else:
                     raise error
 
             # Send a GET request
             self._send_head_request = False
-            self._handle_response(next_request, syncer.sync(self._page.goto(next_request.url)))
+            self._handle_response(self._next_request, syncer.sync(self._page.goto(self._next_request.url)))
 
     def _add_page_listeners(self, page: Page) -> None:
         syncer.sync(self._page.setRequestInterception(True))
@@ -244,7 +245,17 @@ class Crawler(ABC):
             self._aborted_request = True
             await request.abort()
         else:
-            await request.continue_({'method': 'HEAD'} if self._send_head_request else {})
+            overrides = {}
+
+            if self._send_head_request:
+                overrides['method'] = 'HEAD'
+
+            if request.headers:
+                headers = request.headers.copy()
+                headers.update(self._next_request.headers)
+                overrides['headers'] = headers
+
+            await request.continue_(overrides)
 
     async def _on_response(self, response: Response) -> None:
         self._last_response = response

@@ -106,6 +106,24 @@ def test_request_error_handling(httpserver: HTTPServer) -> None:
     httpserver.check_assertions()
 
 
+def test_custom_request_header_handling(httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    httpserver.expect_ordered_request(request_path, method='HEAD', headers={'foo': 'bar'}).respond_with_data()
+    httpserver.expect_ordered_request(request_path, method='GET', headers={'foo': 'bar'}).respond_with_data()
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url, headers={'foo': 'bar'})])
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
 def test_on_start_should_be_called_when_crawler_starts():
     called = False
 

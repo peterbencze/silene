@@ -53,6 +53,12 @@ def test_domain_should_return_request_domain() -> None:
     assert CrawlRequest('https://example.com').domain == 'example.com'
 
 
+def test_headers_should_return_request_headers() -> None:
+    headers = {'foo': 'bar'}
+
+    assert CrawlRequest('https://example.com', headers=headers).headers == headers
+
+
 def test_priority_should_return_request_priority() -> None:
     priority = 1
 
@@ -72,5 +78,5 @@ def test_error_func_should_return_alternative_error_function() -> None:
 
 
 def test_str_should_return_string_representation() -> None:
-    assert str(CrawlRequest('https://example.com', priority=1)) == \
-           'CrawlRequest(url=https://example.com, domain=example.com, priority=1)'
+    assert str(CrawlRequest('https://example.com', headers={'foo': 'bar'}, priority=1)) == \
+           'CrawlRequest(url=https://example.com, domain=example.com, headers=1 headers, priority=1)'

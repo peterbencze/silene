@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING, Dict
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ class CrawlRequest:
     def __init__(
             self,
             url: str,
+            headers: Dict[str, str] = None,
             priority: int = 0,
             redirect_func: Callable[['CrawlResponse', 'CrawlRequest'], None] = None,
             success_func: Callable[['CrawlResponse'], None] = None,
@@ -28,6 +29,7 @@ class CrawlRequest:
     ) -> None:
         self._url = url
         self._domain = urlparse(url).hostname
+        self._headers = headers if headers is not None else {}
         self._priority = priority
         self._redirect_func = redirect_func
         self._success_func = success_func
@@ -36,6 +38,7 @@ class CrawlRequest:
     def merge(self, other_request: 'CrawlRequest') -> 'CrawlRequest':
         return CrawlRequest(
             self._url,
+            self._headers or other_request._headers,
             self._priority or other_request._priority,
             self._redirect_func or other_request._redirect_func,
             self._success_func or other_request._success_func,
@@ -49,6 +52,10 @@ class CrawlRequest:
     @property
     def domain(self) -> str:
         return self._domain
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        return self._headers
 
     @property
     def priority(self) -> int:
@@ -70,4 +77,5 @@ class CrawlRequest:
         return self._priority > other._priority
 
     def __str__(self):
-        return f'CrawlRequest(url={self._url}, domain={self._domain}, priority={self._priority})'
+        return f'CrawlRequest(url={self._url}, domain={self._domain}, headers={len(self._headers)} headers, ' \
+               f'priority={self._priority})'
