@@ -95,3 +95,11 @@ def test_get_next_request_should_return_next_request_when_queue_is_not_empty() -
     crawl_frontier = CrawlFrontier(crawler_configuration)
 
     assert crawl_frontier.get_next_request() is request
+
+
+def test_get_next_request_should_return_next_request_with_higher_priority() -> None:
+    high_priority_request = CrawlRequest('http://test.com', priority=1)
+    crawler_configuration = CrawlerConfiguration([request, high_priority_request])
+    crawl_frontier = CrawlFrontier(crawler_configuration)
+
+    assert crawl_frontier.get_next_request() is high_priority_request

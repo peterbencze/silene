@@ -30,13 +30,14 @@ def error_func():
 
 def test_merge_should_return_new_combined_crawl_request() -> None:
     request = CrawlRequest('https://example.com')
-    other_request = CrawlRequest('https://test.com', redirect_func=redirect_func, success_func=success_func,
+    other_request = CrawlRequest('https://test.com', priority=1, redirect_func=redirect_func, success_func=success_func,
                                  error_func=error_func)
 
     combined_request = request.merge(other_request)
 
     assert combined_request.url == request.url
     assert combined_request.domain == request.domain
+    assert combined_request.priority == other_request.priority
     assert combined_request.redirect_func == other_request.redirect_func
     assert combined_request.success_func == other_request.success_func
     assert combined_request.error_func == other_request.error_func
@@ -50,6 +51,12 @@ def test_url_should_return_request_url() -> None:
 
 def test_domain_should_return_request_domain() -> None:
     assert CrawlRequest('https://example.com').domain == 'example.com'
+
+
+def test_priority_should_return_request_priority() -> None:
+    priority = 1
+
+    assert CrawlRequest('https://example.com', priority=priority).priority == priority
 
 
 def test_redirect_func_should_return_alternative_redirect_function() -> None:

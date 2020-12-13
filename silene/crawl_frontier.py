@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import heapq
 import re
 from hashlib import sha256
 from typing import Optional
@@ -44,7 +45,7 @@ class CrawlFrontier:
                                                                                  request.domain):
             return False
 
-        self._requests.append(request)
+        heapq.heappush(self._requests, request)
         return True
 
     def has_next_request(self) -> bool:
@@ -52,8 +53,9 @@ class CrawlFrontier:
 
     def get_next_request(self) -> Optional[CrawlRequest]:
         try:
-            return self._requests.pop(0)
+            return heapq.heappop(self._requests)
         except IndexError:
+            # If heap is empty
             return None
 
     @staticmethod

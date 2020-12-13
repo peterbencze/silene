@@ -21,12 +21,14 @@ class CrawlRequest:
     def __init__(
             self,
             url: str,
+            priority: int = 0,
             redirect_func: Callable[['CrawlResponse', 'CrawlRequest'], None] = None,
             success_func: Callable[['CrawlResponse'], None] = None,
             error_func: Callable[['CrawlResponse'], None] = None
     ) -> None:
         self._url = url
         self._domain = urlparse(url).hostname
+        self._priority = priority
         self._redirect_func = redirect_func
         self._success_func = success_func
         self._error_func = error_func
@@ -34,6 +36,7 @@ class CrawlRequest:
     def merge(self, other_request: 'CrawlRequest') -> 'CrawlRequest':
         return CrawlRequest(
             self._url,
+            self._priority or other_request._priority,
             self._redirect_func or other_request._redirect_func,
             self._success_func or other_request._success_func,
             self._error_func or other_request._error_func
@@ -48,6 +51,10 @@ class CrawlRequest:
         return self._domain
 
     @property
+    def priority(self) -> int:
+        return self._priority
+
+    @property
     def redirect_func(self) -> Callable[['CrawlResponse', 'CrawlRequest'], None]:
         return self._redirect_func
 
@@ -59,5 +66,8 @@ class CrawlRequest:
     def error_func(self) -> Callable[['CrawlResponse'], None]:
         return self._error_func
 
+    def __lt__(self, other: 'CrawlRequest') -> bool:
+        return self._priority > other._priority
+
     def __str__(self):
-        return f'CrawlRequest(url={self._url})'
+        return f'CrawlRequest(url={self._url}, domain={self._domain}, priority={self._priority})'
