@@ -1,7 +1,5 @@
 # Silene
 
-***
-
 Silene is an open source web crawler framework built upon [Pyppeteer](https://github.com/pyppeteer/pyppeteer).
 
 ## Getting started
