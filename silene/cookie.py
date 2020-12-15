@@ -102,3 +102,8 @@ class Cookie:
                           cookie_dict.get('session'), cookie_dict.get('sameSite'))
         except KeyError as error:
             raise ValueError(f'Cookie dictionary is missing required key "{error.args[0]}"')
+
+    def __str__(self) -> str:
+        return f'Cookie(name={self._name}, value={self._value}, domain={self._domain}, path={self._path}, ' \
+               f'expires={self._expires}, http_only={self._http_only}, secure={self._secure}, ' \
+               f'session={self._session}, same_site={self._same_site})'

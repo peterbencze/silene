@@ -92,3 +92,8 @@ def test_from_dict_should_raise_value_error_when_dictionary_is_missing_required_
         Cookie.from_dict({'name': 'cookie_name'})
 
     assert str(exc_info.value) == f'Cookie dictionary is missing required key "value"'
+
+
+def test_str_should_return_string_representation() -> None:
+    assert str(cookie) == 'Cookie(name=cookie_name, value=cookie_value, domain=example.com, path=/, expires=-1, ' \
+                          'http_only=None, secure=None, session=True, same_site=None)'
