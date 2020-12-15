@@ -26,6 +26,7 @@ from pyppeteer.network_manager import Request, Response
 from pyppeteer.page import Page
 
 from silene.browser_page import BrowserPage
+from silene.cookie import Cookie
 from silene.crawl_frontier import CrawlFrontier
 from silene.crawl_request import CrawlRequest
 from silene.crawl_response import CrawlResponse
@@ -102,6 +103,11 @@ class Crawler(ABC):
 
         syncer.sync(pages[page.index].close())
 
+    def delete_cookie(self, cookie: Cookie) -> None:
+        self._check_if_crawler_running()
+
+        syncer.sync(self._page.deleteCookie(cookie.as_dict()))
+
     def double_click(self, selector: str) -> None:
         self.click(selector, click_count=2)
 
@@ -116,6 +122,11 @@ class Crawler(ABC):
 
         element_handle = syncer.sync(self._page.querySelector(selector))
         return Element(element_handle) if element_handle else None
+
+    def get_cookies(self) -> List[Cookie]:
+        self._check_if_crawler_running()
+
+        return [Cookie.from_dict(cookie) for cookie in syncer.sync(self._page.cookies())]
 
     def get_current_page(self) -> BrowserPage:
         return BrowserPage(self._page_index, self._page.url, syncer.sync(self._page.title()))
@@ -145,6 +156,14 @@ class Crawler(ABC):
             return syncer.sync(self._page.select(selector, *values))
         except ElementHandleError:
             raise NoSuchElementError(selector)
+
+    def set_cookie(self, cookie: Cookie):
+        self._check_if_crawler_running()
+
+        try:
+            syncer.sync(self._page.setCookie(cookie.as_dict()))
+        except PageError as error:
+            raise ValueError(error)
 
     def switch_to_page(self, page: BrowserPage) -> None:
         self._check_if_crawler_running()

@@ -14,6 +14,7 @@ import pytest
 from pytest_httpserver import HTTPServer
 
 from silene.browser_page import BrowserPage
+from silene.cookie import Cookie
 from silene.crawl_request import CrawlRequest
 from silene.crawl_response import CrawlResponse
 from silene.crawler import Crawler
@@ -298,6 +299,49 @@ def test_close_page_when_there_are_multiple_pages(httpserver: HTTPServer) -> Non
     httpserver.check_assertions()
 
 
+def test_delete_cookie(httpserver: HTTPServer) -> None:
+    first_page_path = '/first-page'
+    second_page_path = '/second-page'
+    third_page_path = '/third-page'
+    first_page_url = httpserver.url_for(first_page_path)
+    second_page_url = httpserver.url_for(second_page_path)
+    third_page_url = httpserver.url_for(third_page_path)
+    cookie = Cookie('cookie_name', 'cookie_value')
+    headers = {'Cookie': 'cookie_name=cookie_value'}
+    httpserver.expect_ordered_request(first_page_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(first_page_path, method='GET').respond_with_data()
+    httpserver.expect_ordered_request(second_page_path, method='HEAD', headers=headers).respond_with_data()
+    httpserver.expect_ordered_request(second_page_path, method='GET', headers=headers).respond_with_data()
+    httpserver.expect_ordered_request(third_page_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(third_page_path, method='GET').respond_with_data()
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([
+                CrawlRequest(first_page_url, success_func=self.on_first_page_response),
+                CrawlRequest(second_page_url, success_func=self.on_second_page_response),
+                CrawlRequest(third_page_url, success_func=self.on_third_page_response)
+            ])
+
+        def on_first_page_response(self, _: CrawlResponse) -> None:
+            self.set_cookie(cookie)
+
+        def on_second_page_response(self, _: CrawlResponse) -> None:
+            assert len(self.get_cookies()) == 1
+
+            self.delete_cookie(cookie)
+
+        def on_third_page_response(self, _: CrawlResponse) -> None:
+            assert len(self.get_cookies()) == 0
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
 def test_evaluate_when_element_is_found(httpserver: HTTPServer) -> None:
     request_path = '/page'
     request_url = httpserver.url_for(request_path)
@@ -383,6 +427,39 @@ def test_find_element_when_element_is_not_found(httpserver: HTTPServer) -> None:
 
         def on_response_success(self, response: CrawlResponse) -> None:
             assert self.find_element('#nonexistent') is None
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
+def test_get_cookies(httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    headers = {'Set-Cookie': 'cookie_name=cookie_value'}
+    httpserver.expect_ordered_request(request_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(request_path, method='GET').respond_with_data(headers=headers)
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            cookies = self.get_cookies()
+
+            assert len(cookies) == 1
+            assert cookies[0].name == 'cookie_name'
+            assert cookies[0].value == 'cookie_value'
+            assert cookies[0].domain == 'localhost'
+            assert cookies[0].path == '/'
+            assert cookies[0].expires == -1
+            assert cookies[0].http_only is False
+            assert cookies[0].secure is False
+            assert cookies[0].session is True
+            assert cookies[0].same_site is None
 
         def on_response_error(self, response: CrawlResponse) -> None:
             assert False, f'Response error: {response}'
@@ -550,6 +627,35 @@ def test_select_when_element_is_not_found(httpserver: HTTPServer) -> None:
                 self.select('#nonexistent', ['foo', 'bar'])
 
             assert str(exc_info.value) == 'Unable to locate element using selector #nonexistent'
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
+def test_set_cookie(httpserver: HTTPServer) -> None:
+    first_page_path = '/first-page'
+    second_page_path = '/second-page'
+    first_page_url = httpserver.url_for(first_page_path)
+    second_page_url = httpserver.url_for(second_page_path)
+    headers = {'Cookie': 'cookie_name=cookie_value'}
+    httpserver.expect_ordered_request(first_page_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(first_page_path, method='GET').respond_with_data()
+    httpserver.expect_ordered_request(second_page_path, method='HEAD', headers=headers).respond_with_data()
+    httpserver.expect_ordered_request(second_page_path, method='GET', headers=headers).respond_with_data()
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([
+                CrawlRequest(first_page_url, success_func=self.on_first_page_response),
+                CrawlRequest(second_page_url)
+            ])
+
+        def on_first_page_response(self, _: CrawlResponse) -> None:
+            self.set_cookie(Cookie('cookie_name', 'cookie_value'))
 
         def on_response_error(self, response: CrawlResponse) -> None:
             assert False, f'Response error: {response}'
