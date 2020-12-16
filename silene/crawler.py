@@ -32,7 +32,8 @@ from silene.crawl_request import CrawlRequest
 from silene.crawl_response import CrawlResponse
 from silene.crawler_configuration import CrawlerConfiguration
 from silene.element import Element
-from silene.errors import NoSuchElementError, WaitTimeoutError, CrawlerNotRunningError, NoSuchPageError
+from silene.errors import NoSuchElementError, WaitTimeoutError, CrawlerNotRunningError, NoSuchPageError, \
+    NavigationTimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -126,14 +127,20 @@ class Crawler(ABC):
         :param timeout: the maximum time to wait for navigation (in milliseconds), defaults to 30000
         :raise CrawlerNotRunningError: if the crawler is not running
         :raise NoSuchElementError: if there is no element matching selector
+        :raise NavigationTimeoutError: if the timeout is exceeded
         """
 
         self._check_if_crawler_running()
 
-        syncer.sync(asyncio.wait([
-            self._page.click(selector, options={'clickCount': click_count}),
-            self._page.waitForNavigation(options={'timeout': timeout})
-        ]))
+        try:
+            syncer.sync(asyncio.gather(
+                self._page.waitForNavigation(options={'timeout': timeout}),
+                self._page.click(selector, options={'clickCount': click_count})
+            ))
+        except PageError:
+            raise NoSuchElementError(selector)
+        except pyppeteer.errors.TimeoutError:
+            raise NavigationTimeoutError(timeout)
 
     def close_page(self, page: BrowserPage) -> None:
         """
@@ -361,6 +368,7 @@ class Crawler(ABC):
                        be hidden, i.e. have display: none or visibility: hidden CSS
                        properties, defaults to False
         :param timeout: maximum time to wait for (in milliseconds), defaults to 30000
+        :raise WaitTimeoutError: if the timeout is exceeded
         """
 
         self._check_if_crawler_running()

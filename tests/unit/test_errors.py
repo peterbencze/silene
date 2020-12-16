@@ -10,7 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from silene.errors import CrawlerNotRunningError, NoSuchPageError, NoSuchElementError, WaitTimeoutError
+from silene.errors import CrawlerNotRunningError, NoSuchPageError, NoSuchElementError, WaitTimeoutError, \
+    NavigationTimeoutError
 
 
 class TestCrawlerNotRunningError:
@@ -51,3 +52,13 @@ class TestWaitTimeoutError:
 
     def test_str_should_return_string_representation(self) -> None:
         assert str(self.error) == 'Timeout 1000ms exceeded waiting for selector #test'
+
+
+class TestNavigationTimeoutError:
+    error: NavigationTimeoutError = NavigationTimeoutError(timeout=1000)
+
+    def test_message_should_return_error_message(self) -> None:
+        assert self.error.message == 'Timeout 1000ms exceeded waiting for navigation'
+
+    def test_str_should_return_string_representation(self) -> None:
+        assert str(self.error) == 'Timeout 1000ms exceeded waiting for navigation'

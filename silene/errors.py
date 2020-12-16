@@ -66,3 +66,16 @@ class WaitTimeoutError(SileneError):
 
     def __str__(self) -> str:
         return self._message
+
+
+class NavigationTimeoutError(SileneError):
+    def __init__(self, timeout: int) -> None:
+        self._message = f'Timeout {timeout}ms exceeded waiting for navigation'
+        super().__init__(self._message)
+
+    @property
+    def message(self) -> str:
+        return self._message
+
+    def __str__(self) -> str:
+        return self._message
