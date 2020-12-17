@@ -11,6 +11,7 @@
 # limitations under the License.
 
 import time
+import timeit
 
 import pytest
 from pytest_httpserver import HTTPServer
@@ -981,3 +982,19 @@ def test_type_should_raise_no_such_element_error_when_element_is_not_found(https
     TestCrawler().start()
 
     httpserver.check_assertions()
+
+
+def test_wait_for_timeout_should_wait_for_given_milliseconds(httpserver: HTTPServer) -> None:
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([])
+
+        def on_start(self) -> None:
+            start = timeit.default_timer()
+            self.wait_for_timeout(1000)
+            end = timeit.default_timer()
+            elapsed_time = end - start
+
+            assert 1 <= elapsed_time < 1.1
+
+    TestCrawler().start()
