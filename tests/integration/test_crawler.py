@@ -25,6 +25,34 @@ from silene.crawler_configuration import CrawlerConfiguration
 from silene.errors import NoSuchElementError, NoSuchPageError, NavigationTimeoutError
 
 
+def test_stop_should_stop_crawler_before_processing_next_request(httpserver: HTTPServer) -> None:
+    first_page_path = '/first-page'
+    second_page_path = '/second-page'
+    first_page_url = httpserver.url_for(first_page_path)
+    second_page_url = httpserver.url_for(second_page_path)
+    httpserver.expect_ordered_request(first_page_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(first_page_path, method='GET').respond_with_data()
+
+    class TestCrawler(Crawler):
+        response_count = 0
+
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(first_page_url), CrawlRequest(second_page_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            self.response_count += 1
+            self.stop()
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    crawler = TestCrawler()
+    crawler.start()
+
+    assert crawler.response_count == 1
+    httpserver.check_assertions()
+
+
 def test_successful_request_handing(httpserver: HTTPServer) -> None:
     request_path = '/response-success'
     request_url = httpserver.url_for(request_path)
