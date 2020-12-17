@@ -21,6 +21,8 @@ from silene.crawl_request import CrawlRequest
 
 
 class CrawlerConfiguration:
+    """Specifies settings of the crawler."""
+
     def __init__(
             self,
             seed_requests: List[CrawlRequest],
@@ -28,6 +30,15 @@ class CrawlerConfiguration:
             filter_offsite_requests: bool = False,
             allowed_domains: List[str] = None
     ) -> None:
+        """
+        Creates a new crawler configuration instance.
+
+        :param seed_requests: the list of initial crawl requests to make
+        :param filter_duplicate_requests: toggles duplicate request filtering, defaults to True (optional)
+        :param filter_offsite_requests: toggles offsite request filtering, defaults to False (optional)
+        :param allowed_domains: the list of allowed domains (optional)
+        """
+
         self._seed_requests = seed_requests
         self._filter_duplicate_requests = filter_duplicate_requests
         self._filter_offsite_requests = filter_offsite_requests
@@ -42,21 +53,52 @@ class CrawlerConfiguration:
 
     @property
     def seed_requests(self) -> List[CrawlRequest]:
+        """
+        Returns the list of initial crawl requests to make.
+
+        :return: the list of initial crawl requests to make
+        """
+
         return self._seed_requests
 
     @property
     def filter_duplicate_requests(self) -> bool:
+        """
+        Returns a value indicating whether the duplicate request filter is enabled or not.
+
+        :return: True if the duplicate request filter is enabled, False otherwise
+        """
+
         return self._filter_duplicate_requests
 
     @property
     def filter_offsite_requests(self) -> bool:
+        """
+        Returns a value indicating whether the offsite request filter is enabled or not.
+
+        :return: True if the offsite request filter is enabled, False otherwise
+        """
+
         return self._filter_offsite_requests
 
     @property
     def allowed_domains(self) -> List[str]:
+        """
+        Returns the list of allowed domains.
+        This setting has effect only when the offsite request filter is enabled.
+
+        :return: the list of allowed domains
+        """
+
         return self._allowed_domains
 
     def __str__(self):
+        """
+        Returns the string representation of the crawler configuration.
+
+        :return: the string representation of the crawler configuration
+        """
+
         return f'CrawlerConfiguration(seed_requests={len(self._seed_requests)} requests, ' \
                f'filter_duplicate_requests={self._filter_duplicate_requests}, ' \
                f'filter_offsite_requests={self._filter_offsite_requests}, ' \

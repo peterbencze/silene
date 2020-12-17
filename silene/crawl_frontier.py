@@ -21,10 +21,21 @@ from silene.crawler_configuration import CrawlerConfiguration
 
 
 class CrawlFrontier:
+    """
+    This class is used for managing URLs eligible for crawling and supporting such operations as adding requests and
+    selecting for crawl.
+    """
+
     def __init__(
             self,
             crawler_configuration: CrawlerConfiguration
     ) -> None:
+        """
+        Creates a new crawl frontier instance.
+
+        :param crawler_configuration: the crawler configuration
+        """
+
         self._crawler_configuration = crawler_configuration
         self._requests = []
         self._url_hashes = set()
@@ -34,6 +45,13 @@ class CrawlFrontier:
             self.add_request(request)
 
     def add_request(self, request: CrawlRequest) -> bool:
+        """
+        Adds a crawl requests to the queue.
+
+        :param request: the crawl request to add to the queue
+        :return: True if the request was added to the queue, False otherwise (filtered out)
+        """
+
         if self._crawler_configuration.filter_duplicate_requests:
             url_hash = self._generate_url_hash(request.url)
             if url_hash in self._url_hashes:
@@ -49,9 +67,21 @@ class CrawlFrontier:
         return True
 
     def has_next_request(self) -> bool:
+        """
+        Returns a value indicating whether the queue has any remaining crawl requests or not.
+
+        :return: True if the queue is not empty, False otherwise
+        """
+
         return len(self._requests) > 0
 
     def get_next_request(self) -> Optional[CrawlRequest]:
+        """
+        Returns the next crawl request.
+
+        :return: the next crawl request if the queue is not empty, None otherwise
+        """
+
         try:
             return heapq.heappop(self._requests)
         except IndexError:

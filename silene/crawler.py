@@ -45,6 +45,12 @@ class Crawler(ABC):
             self,
             crawl_frontier: CrawlFrontier = None
     ) -> None:
+        """
+        Creates a new crawler instance.
+
+        :param crawl_frontier: a crawl frontier instance (optional)
+        """
+
         self._configuration: CrawlerConfiguration = self.configure()
         self._crawl_frontier: CrawlFrontier = crawl_frontier or CrawlFrontier(self._configuration)
         self._running: bool = False
