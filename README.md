@@ -38,7 +38,7 @@ This project requires [Pipenv](https://docs.pipenv.org/) to be installed.
 
 ### Create environment
 
-Run `pipenv install` to create a new virtual environment and install the necessary packages.
+Run `pipenv install --dev` to create a new virtual environment and install the necessary packages.
 
 ### Run tests
 
