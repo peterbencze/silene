@@ -485,6 +485,65 @@ def test_delete_cookie_should_delete_cookie(httpserver: HTTPServer) -> None:
     httpserver.check_assertions()
 
 
+def test_double_click_should_double_click_element_when_element_exists(httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    response_data = '''
+        <button id="button" ondblclick="onDoubleClick()">Test button</div>
+        
+        <script>
+            function onDoubleClick() {
+                document.getElementById("button").textContent = "Double clicked!";
+            }
+        </script>
+    '''
+    httpserver.expect_ordered_request(request_path, method='HEAD').respond_with_data(content_type='text/html')
+    httpserver.expect_ordered_request(request_path, method='GET').respond_with_data(content_type='text/html',
+                                                                                    response_data=response_data)
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            self.double_click('#button')
+
+            assert self.find_element('#button').get_text() == 'Double clicked!'
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
+def test_double_click_should_raise_no_such_element_error_when_element_does_not_exist(httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    response_data = '<button id="button">Test button</div>'
+    httpserver.expect_ordered_request(request_path, method='HEAD').respond_with_data(content_type='text/html')
+    httpserver.expect_ordered_request(request_path, method='GET').respond_with_data(content_type='text/html',
+                                                                                    response_data=response_data)
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            with pytest.raises(NoSuchElementError) as exc_info:
+                self.double_click('#nonexistent')
+
+            assert str(exc_info.value) == 'Unable to locate element using selector #nonexistent'
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
 def test_evaluate_should_evaluate_function_when_element_is_found(httpserver: HTTPServer) -> None:
     request_path = '/page'
     request_url = httpserver.url_for(request_path)
