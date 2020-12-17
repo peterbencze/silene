@@ -23,7 +23,7 @@ from silene.crawl_request import CrawlRequest
 from silene.crawl_response import CrawlResponse
 from silene.crawler import Crawler
 from silene.crawler_configuration import CrawlerConfiguration
-from silene.errors import NoSuchElementError, NoSuchPageError, NavigationTimeoutError
+from silene.errors import NoSuchElementError, NoSuchPageError, NavigationTimeoutError, WaitTimeoutError
 
 
 def test_stop_should_stop_crawler_before_processing_next_request(httpserver: HTTPServer) -> None:
@@ -975,6 +975,66 @@ def test_type_should_raise_no_such_element_error_when_element_is_not_found(https
                 self.type('#nonexistent', 'Test')
 
             assert str(exc_info.value) == 'Unable to locate element using selector #nonexistent'
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
+def test_wait_for_selector_should_wait_for_element_matching_selector_when_element_exists(
+        httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    response_data = '''
+        <script>
+            setTimeout(function() {
+                var element = document.createElement("div");
+                element.id = "test";
+                document.body.appendChild(element);
+            }, 500);
+        </script>
+    '''
+    httpserver.expect_ordered_request(request_path, method='HEAD').respond_with_data(content_type='text/html')
+    httpserver.expect_ordered_request(request_path, method='GET').respond_with_data(content_type='text/html',
+                                                                                    response_data=response_data)
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            assert self.find_element('#test') is None
+
+            self.wait_for_selector('#test', visible=True, timeout=1000)
+
+            assert self.find_element('#test') is not None
+
+        def on_response_error(self, response: CrawlResponse) -> None:
+            assert False, f'Response error: {response}'
+
+    TestCrawler().start()
+
+    httpserver.check_assertions()
+
+
+def test_wait_for_selector_should_raise_wait_timeout_error_when_element_does_not_exist(httpserver: HTTPServer) -> None:
+    request_path = '/page'
+    request_url = httpserver.url_for(request_path)
+    httpserver.expect_ordered_request(request_path, method='HEAD').respond_with_data()
+    httpserver.expect_ordered_request(request_path, method='GET').respond_with_data()
+
+    class TestCrawler(Crawler):
+        def configure(self) -> CrawlerConfiguration:
+            return CrawlerConfiguration([CrawlRequest(request_url)])
+
+        def on_response_success(self, response: CrawlResponse) -> None:
+            with pytest.raises(WaitTimeoutError) as exc_info:
+                self.wait_for_selector('#test', visible=True, timeout=1)
+
+            assert str(exc_info.value) == 'Timeout 1ms exceeded waiting for selector #test'
 
         def on_response_error(self, response: CrawlResponse) -> None:
             assert False, f'Response error: {response}'
