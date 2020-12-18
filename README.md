@@ -2,7 +2,13 @@
 
 Silene is an open source web crawler framework built upon [Pyppeteer](https://github.com/pyppeteer/pyppeteer).
 
-## Getting started
+## Requirements
+You must have at least [Python 3.7](https://www.python.org/downloads/) installed.
+
+## Installation
+To install the latest release run `pip install silene`.
+
+## Quickstart guide
 
 Each crawler must subclass the `Crawler` class and implement the abstract `configure` method. The `CrawlerConfiguration`
 specifies the initial requests to make and other properties of the crawler. Once a request is processed, the appropriate
